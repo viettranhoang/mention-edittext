@@ -22,8 +22,7 @@ class SingleRuleActivity : AppCompatActivity(R.layout.activity_single_rule) {
     super.onCreate(savedInstanceState)
 
     val rule = MentionRule()
-    editText.addRule(rule)
-    textView.addRule(rule)
+//    textView.addRule(rule)
 
     editText.setOnMatchListener { rule, text ->
       textView.text = if (text.isNullOrEmpty()) {
@@ -33,17 +32,15 @@ class SingleRuleActivity : AppCompatActivity(R.layout.activity_single_rule) {
       }
     }
 
-    textView.setOnMatchClickListener { showToast(it) }
-    editText.setOnMatchClickListener { showToast(it) }
+//    textView.setOnMatchClickListener { showToast(it) }
 
     replaceButton.setOnClickListener {
-      val success = editText.replace("@mention")
-      showToast(getString(if (success) R.string.target_at_selection else R.string.no_target_at_selection))
+      val success = editText.addMention("1","123456789")
     }
 
     showAllButton.setOnClickListener {
-      val mentions = editText.findMatches<MentionStyle>()
-      textView.text = mentions?.joinToString() ?: getString(R.string.no_mention)
+      val mentions = editText.getMentions()
+//      textView.text = mentions.joinToString()
     }
   }
 }

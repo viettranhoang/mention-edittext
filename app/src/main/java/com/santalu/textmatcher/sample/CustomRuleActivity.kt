@@ -7,6 +7,8 @@ import android.text.TextPaint
 import androidx.appcompat.app.AppCompatActivity
 import com.santalu.textmatcher.findMatches
 import com.santalu.textmatcher.rule.SimpleRule
+import com.santalu.textmatcher.style.MentionStyle
+import com.santalu.textmatcher.style.SimpleStyle
 import com.santalu.textmatcher.style.Style
 import kotlinx.android.synthetic.main.activity_custom_rule.editText
 import kotlinx.android.synthetic.main.activity_custom_rule.showAllButton
@@ -20,6 +22,10 @@ class CustomRuleActivity : AppCompatActivity(R.layout.activity_custom_rule) {
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
+
+    val gapoStyle = SimpleStyle(
+
+    )
 
     val customStyle = CustomStyle()
     val customRule = SimpleRule("@#", "_", customStyle)
@@ -52,6 +58,7 @@ class CustomStyle : Style() {
       isUnderlineText = false
       color = Color.DKGRAY
       typeface = Typeface.create(Typeface.MONOSPACE, Typeface.BOLD)
+      bgColor = Color.GREEN
     }
   }
 }

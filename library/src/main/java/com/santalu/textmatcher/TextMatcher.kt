@@ -2,39 +2,41 @@ package com.santalu.textmatcher
 
 import android.text.Editable
 import android.text.TextWatcher
+import android.util.Log
 import com.santalu.textmatcher.rule.Rule
 
 /**
- * Created by fatih.santalu on 9/9/2019
  *
  * Simple text watcher matches appropriate targets according to given [rules]
  */
 
 class TextMatcher(
   val rules: List<Rule>,
-  val action: OnMatchListener
+  val listener: OnMatcherListener
 ) : TextWatcher {
-
-  internal var isMatchingEnabled = true
 
   override fun afterTextChanged(text: Editable?) {
     if (text.isNullOrEmpty()) return
+    listener.onApplyStyle(text)
+    Log.e("TAG", "onTextChanged:afterTextChanged")
 
-    // customize visual style of targets
-    rules.forEach {
-      it.applyStyle(text)
-    }
   }
 
   override fun beforeTextChanged(text: CharSequence?, start: Int, count: Int, after: Int) {
   }
 
   override fun onTextChanged(text: CharSequence?, start: Int, before: Int, count: Int) {
-    if (!isMatchingEnabled) return
+
+    Log.e("TAG", "onTextChanged: text $text")
+    Log.e("TAG", "onTextChanged: start $start")
+    Log.e("TAG", "onTextChanged: before $before")
+    Log.e("TAG", "onTextChanged: count $count")
+
+    listener.onUpdatePosition(start, before, count)
 
     rules.forEach {
       if (text.isNullOrEmpty()) {
-        action(it, null)
+        listener.onMatched(it, null)
         return@forEach
       }
 
@@ -46,9 +48,9 @@ class TextMatcher(
       val target = text.substring(targetStart, targetEnd)
 
       if (it.isMatches(target)) {
-        action(it, target)
+        listener.onMatched(it, target)
       } else {
-        action(it, null)
+        listener.onMatched(it, null)
       }
     }
   }

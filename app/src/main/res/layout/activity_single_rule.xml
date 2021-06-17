@@ -16,7 +16,7 @@
       app:layout_constraintStart_toStartOf="parent"
       app:layout_constraintTop_toTopOf="parent" />
 
-  <com.santalu.textmatcher.widget.MatcherEditText
+  <com.santalu.textmatcher.widget.PostDetailsCommentEditText
       android:id="@+id/editText"
       android:layout_width="0dp"
       android:layout_height="wrap_content"

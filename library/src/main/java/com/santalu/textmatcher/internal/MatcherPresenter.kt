@@ -1,10 +1,14 @@
 package com.santalu.textmatcher.internal
 
+import android.text.Editable
+import android.text.Spanned
 import android.text.method.LinkMovementMethod
+import com.santalu.textmatcher.Mention
 import com.santalu.textmatcher.OnMatchClickListener
 import com.santalu.textmatcher.OnMatchListener
 import com.santalu.textmatcher.TextMatcher
 import com.santalu.textmatcher.rule.Rule
+import com.santalu.textmatcher.style.MentionStyle
 import kotlin.math.max
 
 /**
@@ -15,6 +19,8 @@ internal class MatcherPresenter(private val view: MatcherView) {
 
   private val rules = mutableListOf<Rule>()
   private var matcher: TextMatcher? = null
+  private val mentions = mutableListOf<Mention>()
+  private val style = MentionStyle()
 
   var matchListener: OnMatchListener? = null
   var matchClickListener: OnMatchClickListener? = null
@@ -28,9 +34,7 @@ internal class MatcherPresenter(private val view: MatcherView) {
    */
   fun attach() {
     if (rules.isNullOrEmpty()) return
-    matcher = TextMatcher(rules, ::notifyMatch).apply {
-      isMatchingEnabled = view.isMatchingEnabled()
-    }
+//    matcher = TextMatcher(rules, ::notifyMatch, ::applyStyle)
     view.addTextChangedListener(matcher)
   }
 
@@ -54,6 +58,35 @@ internal class MatcherPresenter(private val view: MatcherView) {
    */
   fun notifyClick(text: String) {
     matchClickListener?.invoke(text)
+  }
+
+  private fun applyStyle(text: Editable) {
+    val string = text.toString()
+    mentions.toList().forEach {
+      if (string.length >= it.offset + it.mentionText.length) {
+        val textMentionInEditable = string.substring(it.offset, it.offset + it.mentionText.length)
+        if (textMentionInEditable != it.mentionText)
+          mentions.remove(it)
+      } else {
+        mentions.remove(it)
+      }
+
+    }
+
+    // clear previous styles in case targets are invalidated
+    text.getSpans(0, text.length, style::class.java)
+      .forEach {
+        text.removeSpan(it)
+      }
+
+    mentions.forEach {
+      text.setSpan(
+        style.clone(),
+        it.offset,
+        it.offset + it.mentionText.length,
+        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+      )
+    }
   }
 
   private fun setMovementMethod() {
@@ -106,12 +139,10 @@ internal class MatcherPresenter(private val view: MatcherView) {
    */
   fun replace(newText: String): Boolean {
     matcher?.let {
-      it.isMatchingEnabled = false
 
       val editable = view.getEditableText()
       if (editable.isNullOrEmpty()) {
         view.setText("$newText ")
-        it.isMatchingEnabled = true
         return true
       }
 
@@ -130,15 +161,28 @@ internal class MatcherPresenter(private val view: MatcherView) {
           if (following == null || !following.isWhitespace()) {
             editable.insert(cursor, " ")
           }
-          it.isMatchingEnabled = true
           return true
         }
       }
 
-      it.isMatchingEnabled = true
       return false
     }
 
     return false
   }
+
+  fun addMention(mention: Mention) {
+    mentions.add(mention)
+    replace(mention.mentionText)
+  }
+
+  fun getOffset(): Int {
+    val rule = matcher?.rules?.getOrNull(0) ?: return -1
+    val editable = view.getEditableText() ?: return -1
+    val position = max(0, view.getSelectionStart() - 1)
+    return rule.getTargetStart(editable, position)
+  }
+
+  fun getMentions() = mentions
+
 }

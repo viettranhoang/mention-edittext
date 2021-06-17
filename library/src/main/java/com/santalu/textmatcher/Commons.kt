@@ -1,5 +1,6 @@
 package com.santalu.textmatcher
 
+import android.text.Editable
 import androidx.core.text.getSpans
 import androidx.core.text.toSpannable
 import com.santalu.textmatcher.internal.MatcherView
@@ -11,6 +12,8 @@ import com.santalu.textmatcher.style.Style
  */
 
 typealias OnMatchListener = (Rule, String?) -> Unit
+
+typealias OnApplyStyle = (Editable) -> Unit
 
 typealias OnMatchClickListener = (String) -> Unit
 

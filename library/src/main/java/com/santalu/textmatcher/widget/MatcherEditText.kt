@@ -3,6 +3,7 @@ package com.santalu.textmatcher.widget
 import android.content.Context
 import android.util.AttributeSet
 import androidx.appcompat.widget.AppCompatEditText
+import com.santalu.textmatcher.Mention
 import com.santalu.textmatcher.OnMatchClickListener
 import com.santalu.textmatcher.OnMatchListener
 import com.santalu.textmatcher.internal.MatcherPresenter
@@ -52,4 +53,13 @@ class MatcherEditText : AppCompatEditText, MatcherView {
   override fun replace(newText: String): Boolean {
     return presenter.replace(newText)
   }
+
+  fun addMention(mentionId: String, mentionText: String) {
+    val offset = presenter.getOffset()
+    if (offset != -1) {
+      presenter.addMention(Mention(mentionId, mentionText, offset))
+    }
+  }
+
+  fun getMentions() = presenter.getMentions()
 }
