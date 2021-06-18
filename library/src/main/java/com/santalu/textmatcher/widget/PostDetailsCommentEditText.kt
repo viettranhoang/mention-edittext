@@ -10,6 +10,7 @@ import com.santalu.textmatcher.Mention
 import com.santalu.textmatcher.OnMatchListener
 import com.santalu.textmatcher.OnMatcherListener
 import com.santalu.textmatcher.TextMatcher
+import com.santalu.textmatcher.rule.HashtagRule
 import com.santalu.textmatcher.rule.MentionRule
 import com.santalu.textmatcher.rule.Rule
 import com.santalu.textmatcher.style.MentionStyle
@@ -30,12 +31,12 @@ class PostDetailsCommentEditText : AppCompatEditText, OnMatcherListener {
 
   private var matcher: TextMatcher? = null
   private val style = MentionStyle()
-  private val rule = MentionRule()
+  private val rules = listOf(MentionRule(), HashtagRule())
   private var matchListener: OnMatchListener? = null
   private val mentions = mutableListOf<Mention>()
 
   init {
-    matcher = TextMatcher(listOf(rule), this)
+    matcher = TextMatcher(rules, this)
     addTextChangedListener(matcher)
   }
 
@@ -47,6 +48,7 @@ class PostDetailsCommentEditText : AppCompatEditText, OnMatcherListener {
     val offset = getOffset()
     if (offset != -1 && replace(mentionText)) {
       mentions.add(Mention(mentionId, mentionText, offset))
+      onApplyStyle(editableText)
     }
   }
 
@@ -58,9 +60,55 @@ class PostDetailsCommentEditText : AppCompatEditText, OnMatcherListener {
     matcher = null
   }
 
+  override fun onMatched(rule: Rule, textMatched: String?) {
+    matchListener?.invoke(rule, textMatched)
+  }
+
+  override fun onApplyStyle(editable: Editable) {
+    // clear previous styles in case targets are invalidated
+    editable.getSpans(0, editable.length, style::class.java)
+      .forEach {
+        editable.removeSpan(it)
+      }
+
+    mentions.forEach {
+      editable.setSpan(
+        style.clone(),
+        it.offset,
+        it.offset + it.mentionText.length,
+        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+      )
+    }
+  }
+
+  override fun onUpdatePosition(start: Int, before: Int, count: Int) {
+    with(mentions.iterator()) {
+      forEach { mention ->
+        Log.e(
+          "TAG",
+          "onUpdatePosition: start $start before $before count $count offset ${mention.offset} length ${mention.mentionText.length}"
+        )
+
+        val startPosition = start + before
+
+
+        val endPosition = if (before > count)
+          (mention.offset + mention.mentionText.length + 1)
+        else
+          (mention.offset + mention.mentionText.length)
+
+        if (startPosition > mention.offset && startPosition < endPosition) {
+          remove()
+        } else if (startPosition <= mention.offset) {
+          mention.offset += (count - before)
+        }
+      }
+    }
+  }
+
   private fun getOffset(): Int {
     val position = max(0, selectionStart - 1)
-    return rule.getTargetStart(editableText, position)
+    return rules[0].getTargetStart(editableText, position)
   }
 
   /**
@@ -87,12 +135,6 @@ class PostDetailsCommentEditText : AppCompatEditText, OnMatcherListener {
           editable.replace(start, end, newText)
           // add whitespace at the end if needed
           val cursor = start + newText.length
-          editable.setSpan(
-            style.clone(),
-            start,
-            start + newText.length,
-            Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
-          )
           val following = editable.getOrNull(cursor)
           if (following == null || !following.isWhitespace()) {
             editable.insert(cursor, " ")
@@ -107,42 +149,5 @@ class PostDetailsCommentEditText : AppCompatEditText, OnMatcherListener {
     return false
   }
 
-  override fun onMatched(rule: Rule, textMatched: String?) {
-    matchListener?.invoke(rule, textMatched)
-  }
-
-  override fun onApplyStyle(editable: Editable) {
-    // clear previous styles in case targets are invalidated
-    editable.getSpans(0, editable.length, style::class.java)
-      .forEach {
-        editable.removeSpan(it)
-      }
-
-    mentions.forEach {
-      editable.setSpan(
-        style.clone(),
-        it.offset,
-        it.offset + it.mentionText.length,
-        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
-      )
-    }
-  }
-
-  override fun onUpdatePosition(start: Int, before: Int, count: Int) {
-    val position = if (start > 0 && before > count) start - 1 else start
-
-    with(mentions.iterator()) {
-      forEach { mention ->
-        Log.e("TAG", "onUpdatePosition: $position $before $count $mention")
-        if (position > mention.offset && position < mention.offset + mention.mentionText.length - 1) {
-          remove()
-          Log.e("TAG", "onUpdatePosition: result remove")
-        } else if (position <= mention.offset) {
-          mention.offset += (count - before)
-          Log.e("TAG", "onUpdatePosition: result $mention")
-        }
-      }
-    }
-  }
 }
 

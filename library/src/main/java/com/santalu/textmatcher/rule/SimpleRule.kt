@@ -47,13 +47,7 @@ open class SimpleRule @JvmOverloads constructor(
   }
 
   override fun getTargetEnd(text: CharSequence, start: Int): Int {
-    val end = text.length
-    for (index in start until end) {
-      text.getOrNull(index)
-        ?.takeIf { allowedCharacters?.contains(it) == true || it.isWhitespace() }
-        ?.let { return index }
-    }
-    return end
+    return start + 1
   }
 
   override fun applyStyle(text: Editable) {

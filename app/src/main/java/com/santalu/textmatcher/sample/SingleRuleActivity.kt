@@ -35,7 +35,7 @@ class SingleRuleActivity : AppCompatActivity(R.layout.activity_single_rule) {
 //    textView.setOnMatchClickListener { showToast(it) }
 
     replaceButton.setOnClickListener {
-      val success = editText.addMention("1","123456789")
+      val success = editText.addMention("1","TranHoangViet")
     }
 
     showAllButton.setOnClickListener {

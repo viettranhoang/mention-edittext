@@ -12,25 +12,21 @@ import com.santalu.textmatcher.rule.Rule
 
 class TextMatcher(
   val rules: List<Rule>,
-  val listener: OnMatcherListener
+  private val listener: OnMatcherListener
 ) : TextWatcher {
 
   override fun afterTextChanged(text: Editable?) {
     if (text.isNullOrEmpty()) return
+    rules.forEach {
+      it.applyStyle(text)
+    }
     listener.onApplyStyle(text)
-    Log.e("TAG", "onTextChanged:afterTextChanged")
-
   }
 
   override fun beforeTextChanged(text: CharSequence?, start: Int, count: Int, after: Int) {
   }
 
   override fun onTextChanged(text: CharSequence?, start: Int, before: Int, count: Int) {
-
-    Log.e("TAG", "onTextChanged: text $text")
-    Log.e("TAG", "onTextChanged: start $start")
-    Log.e("TAG", "onTextChanged: before $before")
-    Log.e("TAG", "onTextChanged: count $count")
 
     listener.onUpdatePosition(start, before, count)
 
@@ -48,7 +44,7 @@ class TextMatcher(
       val target = text.substring(targetStart, targetEnd)
 
       if (it.isMatches(target)) {
-        listener.onMatched(it, target)
+        listener.onMatched(it, target.removeRange(0, 1))
       } else {
         listener.onMatched(it, null)
       }
